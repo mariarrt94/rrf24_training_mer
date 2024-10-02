@@ -11,7 +11,7 @@ library(labelled)
 ### Loading data ----
 
 # Load the dataset
-data_path <- "C:/Users/wb614536/Downloads/DataWork/DataWork/Data/"
+#data_path <- "ypur path"
 
 data     <- read_dta(file.path(data_path, "Raw/TZA_CCT_baseline.dta"))
 

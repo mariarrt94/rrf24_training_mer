@@ -2,38 +2,37 @@
 # 03. Data Analysis
 
 # Libraries
-library(haven)
-library(dplyr)
-library(modelsummary)
-library(stargazer)
-library(ggplot2)
-library(tidyr)
+# library(haven)
+# library(dplyr)
+# library(modelsummary)
+# library(stargazer)
+# library(ggplot2)
+# library(tidyr)
+
+# Load data 
 
 # Load data 
 #household level data
-data_path <- "ADD-YOUR-PATH"
-hh_data   <- read_dta(file.path(data_path, "Final/TZA_CCT_analysis.dta"))
+hh_data <- read_dta(file.path(data_path, "Final/TZA_CCT_analysis.dta"))
 
 # secondary data 
-secondary_data <- read_dta(file.path(data_path, "Final/TZA_amenity_analysis.dta")) %>%
-    mutate(district = as_factor(district))
+secondary_data <- read_dta(file.path(data_path, "Final/TZA_amenity_analysis.dta"))
 
 # Summary statistics ----
 
+# Remove Stata-specific attributes from all variables
+hh_data <- hh_data %>%
+    zap_formats() %>%
+    zap_labels()
+
+
+# Create summary statistics by district
 # Create summary statistics by district and export to CSV
-data_renamed <-
-    hh_data %>%
-    select(
-        `HH size` = hh_size,
-        `N children <= 5` = n_child_5,
-        `N of elderly (> 60)` = n_elder,
-        `Any member can read` = read,
-        `Any member was sick in last 4 days` = sick,
-        `District` = district)
-    
 summary_table <- datasummary(
-     All(data_renamed) ~ as_factor(District) * (Mean + SD), 
-    data =data_renamed,
+    hh_size + n_child_5 + n_elder + read + sick + female_head + 
+        livestock_now + area_acre_w + drought_flood + crop_damage ~ 
+        to_factor(district) * (Mean + SD), 
+    data = hh_data,
     title = "Summary Statistics by District",
     output = file.path("Outputs", "summary_table.csv")  # Change to CSV
 )
@@ -41,15 +40,9 @@ summary_table <- datasummary(
 
 # Balance table ----
 
-balance_data <- hh_data %>%
-    select(
-        `HH size` = hh_size,
-        `N children <= 5` = n_child_5,
-        `N of elderly (> 60)` = n_elder,
-        `Any member can read` = read,
-        `Any member was sick in last 4 days` = sick,
-        treatment
-        )
+balance_data <- hh_data %>% 
+    select("hh_size", "n_child_5", "n_elder", "read", "sick", "female_head",
+            "livestock_now", "area_acre_w", "drought_flood", "crop_damage", "treatment")
 
 balance_table <- datasummary_balance(
     sumvars ~ treatment,
@@ -68,22 +61,17 @@ model1 <- lm(food_cons_usd_w ~ treatment, data = hh_data)
 # Model 2: Add controls (crop_damage, drought_flood)
 model2 <- lm(food_cons_usd_w ~ treatment + crop_damage + drought_flood, data = hh_data)
 
-# Model 3: Add FE by district
-model3 <- lm(food_cons_usd_w ~ treatment + crop_damage + drought_flood + factor(district), data = hh_data)
+# Model 3: Add clustering by village
+model3 <- lm(food_cons_usd_w ~ treatment + crop_damage + drought_flood +factor(district), data = hh_data)
 
 # Create regression table using stargazer
 stargazer(
     model1, model2, model3,
-    title = "Food Consumption Effects",
-    keep = c("treatment", "crop_damage", "drought_flood"),
-    covariate.labels = c("Treatment",
-                         "Crop Damage",
-                         "Drought/Flood"),
+    title = "Regression Table",
+    covariate.labels = c("Treatment", "Crop Damage", "Drought/Flood"),
     dep.var.labels = c("Food Consumption (USD)"),
-    dep.var.caption = "",
-    add.lines = list(c("District Fixed Effects", "No", "No", "Yes")),
+    add.lines = list(c("Clustering by Village", "No", "No", "Yes")),
     header = FALSE,
-    keep.stat = c("n", "adj.rsq"),
     notes = "Standard errors in parentheses",
     out = file.path("Outputs","regression_table.tex")
 )
@@ -94,7 +82,7 @@ stargazer(
 # Ensure treatment is a factor for proper labeling
 hh_data_plot <- hh_data %>%
     mutate(treatment = factor(treatment, labels = c("Control", "Treatment")), 
-           district = as_factor(district))
+           district = labelled::to_factor(district)) 
 
 # Create the bar plot
 # Create the bar plot
