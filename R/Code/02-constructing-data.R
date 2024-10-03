@@ -1,10 +1,6 @@
 # Reproducible Research Fundamentals 
 # 02. Data construction
 
-library(tidyverse)
-# RRF - 2024 - Construction
-
-#data_path <- "your path"
 
 # Preliminary - Load data
 # Load HH data
