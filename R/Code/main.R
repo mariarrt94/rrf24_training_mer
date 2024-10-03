@@ -21,12 +21,10 @@ library(RColorBrewer) # color palettes
 # this is the second root of the project, the first root is the code whose directory 
 # is already being handled by the rstudio project.
 
-
-# just change this main path 
-data_path <-  "C:/Users/wb614536/Downloads/DataWork/DataWork/Data/"
-
+data_path <- "C:/Users/wb614536/Downloads/DataWork/DataWork/Data/"
 
 # Run the R scripts ----
 
 source("Code/01-processing-data.R")
-#...
+source("Code/02-constructing-data.R")
+source("Code/03-analyzing-data.R")
